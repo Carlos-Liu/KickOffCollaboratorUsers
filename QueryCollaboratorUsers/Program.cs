@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -16,13 +17,22 @@ namespace QueryCollaboratorUsers
         private static List<User> _activeUsers = new List<User>();
 
         // how many users can be online at the same time, if exceeds this number, then the exe will logoff the users
-        private const int MaxOnlineUser = 3;
+        private const int DefaultMaxOnlineUser = 3;
 
         // the user inactive for 10 minutes will be logoff
         private const double InactiveDurationThresholdInSeconds = 15 * 60;
 
+        private static int MaxOnlineUser { get; set; }
+
         static void Main(string[] args)
         {
+            if (args.Length > 0)
+            {
+                int maxOnlineUserArgument;
+                var parsed = int.TryParse(args[0], NumberStyles.Integer, new NumberFormatInfo(), out maxOnlineUserArgument);
+                MaxOnlineUser = parsed ? maxOnlineUserArgument : DefaultMaxOnlineUser;
+            }
+
             var activeUserPageHtmlString = GetActiveUserPage();
             ParseActiveUserPage(activeUserPageHtmlString);
 
@@ -175,6 +185,7 @@ namespace QueryCollaboratorUsers
         {
             var logContent = new StringBuilder();
             logContent.AppendLine($"Time: {DateTime.Now.ToString("O")}");
+            logContent.AppendLine($"Max online user count: {MaxOnlineUser}");
             foreach (var user in logoffUsersList)
             {
                 var item = $"Display Name: {user.DisplayName}, Last Activity Time: {user.LastActivityTime}";
